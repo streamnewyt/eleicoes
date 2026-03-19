@@ -34,15 +34,19 @@ def coletar_candidatos(id_eleicao, cod_municipio):
 with open("municipios_pe.json", "r", encoding='utf-8') as f:
     cidades = json.load(f)
 
-id_atual = descobrir_id_eleicao()
-os.makedirs("dados", exist_ok=True) # Cria uma pasta para não bagunçar a raiz
+# ... (resto do código igual acima)
 
-# 2. Loop para processar cada cidade da sua lista
+id_atual = descobrir_id_eleicao()
+
+# AJUSTE AQUI: Criando a pasta dentro do caminho 'workflow'
+os.makedirs("workflow/dados", exist_ok=True) 
+
 for cidade in cidades:
     print(f"Coletando: {cidade['nome']}...")
     dados_finais = coletar_candidatos(id_atual, cidade['codigo'])
     
-    filename = f"dados/{cidade['codigo']}.json"
+    # SALVANDO NO CAMINHO CERTO
+    filename = f"workflow/dados/{cidade['codigo']}.json"
     with open(filename, "w", encoding='utf-8') as f:
         json.dump(dados_finais, f, ensure_ascii=False)
 
