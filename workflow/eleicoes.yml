@@ -1,35 +1,39 @@
-name: Atualizador de Dados Eleitorais
+name: Atualizador de Dados
 
 on:
-  workflow_dispatch: # Permite rodar manualmente
+  workflow_dispatch: # Para você rodar manualmente no botão
   schedule:
-    - cron: '0 0 * * *' # Roda uma vez por dia (estático)
-
-permissions:
-  contents: write
+    - cron: '0 0 * * *'
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    # ESSA LINHA ABAIXO É A CHAVE PARA O SUCESSO
+    permissions:
+      contents: write
+      
     steps:
-      - name: Checkout
-        uses: actions/checkout@v3
+      - name: Checkout do código
+        uses: actions/checkout@v4
 
       - name: Configurar Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
-          python-version: '3.9'
+          python-version: '3.10'
 
-      - name: Instalar Dependências
+      - name: Instalar dependências
         run: pip install requests
 
       - name: Executar Coletor
         run: python coletor_eleicoes.py
 
-      - name: Commit e Push
+      - name: Verificar se os arquivos foram criados
+        run: ls -R dados/ # Isso mostra no log se os arquivos existem antes do push
+
+      - name: Commit e Push dos dados
         run: |
-          git config --local user.email "actions@github.com"
-          git config --local user.name "GitHub Actions"
-          git add dados/*.json  
-          git commit -m "Novos dados" || echo "Sem mudanças"
-          git push
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add dados/*.json
+          git commit -m "Atualizando candidatos $(date +'%Y-%m-%d %H:%M')" || echo "Sem mudanças para salvar"
+          git push origin main
