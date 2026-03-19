@@ -21,6 +21,9 @@ jobs:
         run: |
           git config --local user.email "actions@github.com"
           git config --local user.name "GitHub Actions"
-          git add dados/
-          git commit -m "Dados atualizados" || echo "Nada para mudar"
-          git push
+          # Adiciona a pasta dados explicitamente
+          mkdir -p dados
+          git add dados/*.json
+          # O commit só acontece se houver arquivos novos
+          git commit -m "Dados atualizados $(date)" || echo "Nada para mudar"
+          git push origin main
