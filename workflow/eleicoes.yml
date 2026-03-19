@@ -26,10 +26,10 @@ jobs:
       - name: Executar Coletor
         run: python coletor_eleicoes.py
 
-      - name: Commit e Push dos JSONs
+      - name: Commit e Push
         run: |
           git config --local user.email "actions@github.com"
           git config --local user.name "GitHub Actions"
-          git add candidatos_palmares.json config_eleicao.json
-          git commit -m "Dados Eleitorais Atualizados: $(date)" || echo "Sem mudanças"
+          git add dados/*.json  
+          git commit -m "Novos dados" || echo "Sem mudanças"
           git push
