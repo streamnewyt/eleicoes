@@ -1,0 +1,35 @@
+name: Atualizador de Dados Eleitorais
+
+on:
+  workflow_dispatch: # Permite rodar manualmente
+  schedule:
+    - cron: '0 0 * * *' # Roda uma vez por dia (estático)
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Configurar Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Instalar Dependências
+        run: pip install requests
+
+      - name: Executar Coletor
+        run: python coletor_eleicoes.py
+
+      - name: Commit e Push dos JSONs
+        run: |
+          git config --local user.email "actions@github.com"
+          git config --local user.name "GitHub Actions"
+          git add candidatos_palmares.json config_eleicao.json
+          git commit -m "Dados Eleitorais Atualizados: $(date)" || echo "Sem mudanças"
+          git push
