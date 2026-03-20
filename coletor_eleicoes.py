@@ -5,62 +5,58 @@ import time
 
 # Configurações Oficiais TSE 2024
 ANO = "2024"
-# O ID 20452 é o código da Eleição Municipal Ordinária de 2024
 ID_ELEICAO = "20452" 
 
 def coletar_candidatos(cod_municipio):
     candidatos_cidade = []
-    # Cargos: 11 (Prefeito), 13 (Vereador)
+    # 11: Prefeito, 13: Vereador
     for cargo in ["11", "13"]:
-        # URL que o próprio site do TSE usa
         url = f"https://divulgacandcontas.tse.jus.br/divulga/rest/v1/candidatura/listar/{ANO}/{cod_municipio}/{ID_ELEICAO}/{cargo}/candidatos"
         
         try:
-            headers = {'User-Agent': 'Mozilla/5.0'}
-            res = requests.get(url, headers=headers, timeout=15)
+            # HEADERS FORTES: Faz o GitHub parecer um navegador real
+            headers = {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                'Referer': 'https://divulgacandcontas.tse.jus.br/divulga/',
+                'Accept': 'application/json, text/plain, */*'
+            }
+            
+            res = requests.get(url, headers=headers, timeout=20)
             
             if res.status_code == 200:
                 dados = res.json()
                 lista = dados.get('candidatos', [])
                 if lista:
                     candidatos_cidade.extend(lista)
-                    print(f"   [OK] {len(lista)} candidatos encontrados para cargo {cargo}")
+                    print(f"   ✅ [OK] {len(lista)} candidatos encontrados para o cargo {cargo}")
+                else:
+                    print(f"   ⚠️ [VAZIO] API retornou sucesso, mas sem dados para cargo {cargo}")
             else:
-                print(f"   [ERRO] Status {res.status_code} na URL: {url}")
+                print(f"   ❌ [ERRO] Código {res.status_code} na API")
             
-            time.sleep(0.5) 
+            time.sleep(1) # Espera um pouco mais para não ser bloqueado
         except Exception as e:
-            print(f"   [FALHA] {e}")
+            print(f"   🔥 [FALHA] Erro de conexão: {e}")
             
     return candidatos_cidade
 
-# --- INÍCIO DO PROCESSO ---
+# --- PROCESSO PRINCIPAL ---
 
-# 1. Carregar Cidades
-try:
-    with open("municipios_pe.json", "r", encoding='utf-8') as f:
-        cidades = json.load(f)
-except Exception as e:
-    print(f"Erro ao ler municipios_pe.json: {e}")
-    exit()
+if not os.path.exists("municipios_pe.json"):
+    print("ERRO: Arquivo municipios_pe.json não encontrado!")
+    exit(1)
 
-# 2. Criar pasta
+with open("municipios_pe.json", "r", encoding='utf-8') as f:
+    cidades = json.load(f)
+
 os.makedirs("dados", exist_ok=True)
-
-# 3. Loop de Coleta
 print(f"🚀 Iniciando coleta para {len(cidades)} cidades...")
 
 for cidade in cidades:
-    nome = cidade['nome']
-    codigo = cidade['codigo']
+    print(f"🔎 Processando: {cidade['nome']} ({cidade['codigo']})...")
+    dados_finais = coletar_candidatos(cidade['codigo'])
     
-    print(f"🔎 Processando: {nome} ({codigo})...")
-    
-    dados_finais = coletar_candidatos(codigo)
-    
-    # Salva o arquivo (mesmo que vazio, para sabermos que passou por ali)
-    path = f"dados/{codigo}.json"
-    with open(path, "w", encoding='utf-8') as f:
+    with open(f"dados/{cidade['codigo']}.json", "w", encoding='utf-8') as f:
         json.dump(dados_finais, f, ensure_ascii=False)
 
-print("\n✅ FIM: Todos os arquivos foram gerados na pasta 'dados'.")
+print("\n✅ FIM: Processo concluído.")
