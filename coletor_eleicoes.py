@@ -4,31 +4,27 @@ import os
 import time
 
 def descobrir_id_eleicao(ano="2024"):
-    url = f"https://divulgacandcontas.tse.jus.br/divulga/rest/v1/eleicao/listar/municipais/{ano}"
-    try:
-        response = requests.get(url)
-        dados = response.json()
-        for eleicao in dados['eleicoes']:
-            if "ORDINÁRIA" in eleicao['nome'].upper():
-                return eleicao['codigo']
-    except:
-        return "20452"
+    # ID fixo oficial do TSE para Eleições Municipais 2024 (Ordinária)
+    # Tente este primeiro. Se não retornar nada, o TSE pode ter mudado para 619
+    return "20452" 
 
 def coletar_candidatos(id_eleicao, cod_municipio):
     candidatos_cidade = []
+    # Cargos: 11 (Prefeito), 12 (Vice-Prefeito), 13 (Vereador)
     for cargo in ["11", "13"]:
         url = f"https://divulgacandcontas.tse.jus.br/divulga/rest/v1/candidatura/listar/2024/{cod_municipio}/{id_eleicao}/{cargo}/candidatos"
         try:
-            res = requests.get(url)
+            res = requests.get(url, timeout=10)
             if res.status_code == 200:
                 dados = res.json()
-                if 'candidatos' in dados:
+                if 'candidatos' in dados and dados['candidatos']:
                     candidatos_cidade.extend(dados['candidatos'])
+                    print(f"   - Encontrados {len(dados['candidatos'])} para cargo {cargo}")
             time.sleep(0.5) 
-        except:
+        except Exception as e:
+            print(f"Erro na requisição: {e}")
             continue
     return candidatos_cidade
-
 # Carrega a lista de cidades (deve estar na raiz do GitHub)
 try:
     with open("municipios_pe.json", "r", encoding='utf-8') as f:
