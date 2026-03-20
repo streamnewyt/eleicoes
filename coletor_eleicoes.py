@@ -3,10 +3,21 @@ import json
 import os
 import time
 
-def descobrir_id_eleicao(ano="2024"):
-    # ID fixo oficial do TSE para Eleições Municipais 2024 (Ordinária)
-    # Tente este primeiro. Se não retornar nada, o TSE pode ter mudado para 619
-    return "20452" 
+def descobrir_id_eleicao(ano="2024", uf="PE"):
+    # Esta URL lista todas as eleições municipais de 2024 para o estado (PE)
+    url = f"https://divulgacandcontas.tse.jus.br/divulga/rest/v1/eleicao/listar/municipais/{ano}"
+    try:
+        response = requests.get(url, timeout=10)
+        dados = response.json()
+        # Procuramos a eleição de 2024 que seja "ORDINÁRIA"
+        for eleicao in dados.get('eleicoes', []):
+            if eleicao['nome'].upper().find("ORDINÁRIA") != -1:
+                print(f"✅ ID da Eleição encontrado: {eleicao['codigo']} ({eleicao['nome']})")
+                return eleicao['codigo']
+        return "20452" # Fallback caso falhe
+    except Exception as e:
+        print(f"Erro ao buscar ID da eleição: {e}")
+        return "20452"
 
 def coletar_candidatos(id_eleicao, cod_municipio):
     candidatos_cidade = []
