@@ -15,7 +15,6 @@ def descobrir_id_eleicao(ano="2024"):
         return "20452"
 
 def coletar_candidatos(id_eleicao, cod_municipio):
-    # Puxa Prefeito (11) e Vereador (13) e junta num arquivo só da cidade
     candidatos_cidade = []
     for cargo in ["11", "13"]:
         url = f"https://divulgacandcontas.tse.jus.br/divulga/rest/v1/candidatura/listar/2024/{cod_municipio}/{id_eleicao}/{cargo}/candidatos"
@@ -25,25 +24,28 @@ def coletar_candidatos(id_eleicao, cod_municipio):
                 dados = res.json()
                 if 'candidatos' in dados:
                     candidatos_cidade.extend(dados['candidatos'])
-            time.sleep(0.5) # Pausa leve para o TSE não bloquear por excesso de acessos
+            time.sleep(0.5) 
         except:
             continue
     return candidatos_cidade
 
-# 1. Carrega sua lista de cidades
-with open("municipios_pe.json", "r", encoding='utf-8') as f:
-    cidades = json.load(f)
+# Carrega a lista de cidades (deve estar na raiz do GitHub)
+try:
+    with open("municipios_pe.json", "r", encoding='utf-8') as f:
+        cidades = json.load(f)
+except FileNotFoundError:
+    print("Erro: O arquivo municipios_pe.json não foi encontrado na raiz!")
+    exit(1)
 
 id_atual = descobrir_id_eleicao()
 
-# VAMOS SALVAR NA RAIZ PARA EVITAR ERRO DE CAMINHO
+# Cria a pasta 'dados' na raiz do repositório
 os.makedirs("dados", exist_ok=True) 
 
 for cidade in cidades:
     print(f"Coletando: {cidade['nome']}...")
     dados_finais = coletar_candidatos(id_atual, cidade['codigo'])
     
-    # Salvando em dados/codigo.json na raiz do repo
     filename = f"dados/{cidade['codigo']}.json"
     with open(filename, "w", encoding='utf-8') as f:
         json.dump(dados_finais, f, ensure_ascii=False)
